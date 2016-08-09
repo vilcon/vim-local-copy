@@ -175,7 +175,6 @@ NEW_TESTS = test_arglist.res \
 	    test_increment_dbcs.res \
 	    test_job_fails.res \
 	    test_json.res \
-	    test_langmap.res \
 	    test_man.res \
 	    test_matchadd_conceal.res \
 	    test_netbeans.res \

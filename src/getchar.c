@@ -134,6 +134,12 @@ static int	inchar(char_u *buf, int maxlen, long wait_time, int tb_change_cnt);
 static char_u	*eval_map_expr(char_u *str, int c);
 #endif
 
+
+#ifdef FEAT_LANGMAP
+int             langmap_adjust(char_u*,int,int);
+#endif
+
+
 /*
  * Free and clear a buffer.
  */
@@ -1959,9 +1965,6 @@ vgetorpeek(int advance)
     int		shape_changed = FALSE;  /* adjusted cursor shape */
 #endif
     int		n;
-#ifdef FEAT_LANGMAP
-    int		nolmaplen;
-#endif
     int		old_wcol, old_wrow;
     int		wait_tb_len;
 
@@ -2085,6 +2088,7 @@ vgetorpeek(int advance)
 		    mp = NULL;
 		    max_mlen = 0;
 		    c1 = typebuf.tb_buf[typebuf.tb_off];
+
 		    if (no_mapping == 0 && maphash_valid
 			    && (no_zero_mapping == 0 || c1 != '0')
 			    && (typebuf.tb_maplen == 0
@@ -2102,17 +2106,6 @@ vgetorpeek(int advance)
 #endif
 			    )
 		    {
-#ifdef FEAT_LANGMAP
-			if (c1 == K_SPECIAL)
-			    nolmaplen = 2;
-			else
-			{
-			    LANGMAP_ADJUST(c1,
-					   (State & (CMDLINE | INSERT)) == 0
-					   && get_real_state() != SELECTMODE);
-			    nolmaplen = 0;
-			}
-#endif
 #ifdef FEAT_LOCALMAP
 			/* First try buffer-local mappings. */
 			mp = curbuf->b_maphash[MAP_HASH(local_State, c1)];
@@ -2144,33 +2137,22 @@ vgetorpeek(int advance)
 			    /*
 			     * Only consider an entry if the first character
 			     * matches and it is for the current state.
-			     * Skip ":lmap" mappings if keys were mapped.
+			     *
+			     * Used to skip ":lmap" mappings for keymap'ed keys here: 
+			     *   (... && ((mp->m_mode & LANGMAP) == 0 || typebuf.tb_maplen == 0))
+			     * But further down ins_typebuf() is after gotchars(),
+			     *   so not the result of the keymap is placed in @a, 
+			     *   therefore it needs to be played here.
 			     */
 			    if (mp->m_keys[0] == c1
 				    && (mp->m_mode & local_State)
-				    && ((mp->m_mode & LANGMAP) == 0
-					|| typebuf.tb_maplen == 0))
+			       )
 			    {
-#ifdef FEAT_LANGMAP
-				int	nomap = nolmaplen;
-				int	c2;
-#endif
 				/* find the match length of this mapping */
 				for (mlen = 1; mlen < typebuf.tb_len; ++mlen)
 				{
-#ifdef FEAT_LANGMAP
-				    c2 = typebuf.tb_buf[typebuf.tb_off + mlen];
-				    if (nomap > 0)
-					--nomap;
-				    else if (c2 == K_SPECIAL)
-					nomap = 2;
-				    else
-					LANGMAP_ADJUST(c2, TRUE);
-				    if (mp->m_keys[mlen] != c2)
-#else
 				    if (mp->m_keys[mlen] !=
 					typebuf.tb_buf[typebuf.tb_off + mlen])
-#endif
 					break;
 				}
 
@@ -2869,7 +2851,8 @@ vgetorpeek(int advance)
 		    }
 		}
 		else
-		{	    /* allow mapping for just typed characters */
+		{
+		    /* allow mapping for just typed characters */
 		    while (typebuf.tb_buf[typebuf.tb_off
 						     + typebuf.tb_len] != NUL)
 			typebuf.tb_noremap[typebuf.tb_off
@@ -2952,6 +2935,9 @@ inchar(
     int		len = 0;	    /* init for GCC */
     int		retesc = FALSE;	    /* return ESC with gotint */
     int		script_char;
+#ifdef FEAT_MBYTE
+    int		script_char_len = 0;
+#endif
 
     if (wait_time == -1L || wait_time > 100L)  /* flush output before waiting */
     {
@@ -3015,12 +3001,25 @@ inchar(
 	}
 	else
 	{
-	    buf[0] = script_char;
-	    len = 1;
+	    buf[len++] = script_char;
+
+#ifdef FEAT_MBYTE
+	    /* For a multi-byte character get all of it
+	     */
+	    if (script_char_len == 0)
+	    {
+		script_char_len = MB_BYTE2LEN_CHECK(script_char);
+	    }
+	    if (script_char_len-- > 1 && len < maxlen)
+	    {
+		script_char = -1;
+		continue;
+	    }
+#endif
 	}
     }
 
-    if (script_char < 0)	/* did not get a character from script */
+    if (script_char < 0) /* did not get a (complete) character from script */
     {
 	/*
 	 * If we got an interrupt, skip all previously typed characters and
@@ -3060,7 +3059,20 @@ inchar(
     if (typebuf_changed(tb_change_cnt))
 	return 0;
 
-    return fix_input_buffer(buf, len, script_char >= 0);
+    len = fix_input_buffer(buf, len, script_char >= 0);
+
+#ifdef FEAT_LANGMAP
+    if (*p_langmap && len &&
+	((((State & (CMDLINE | INSERT)) == 0) 
+	 && get_real_state() != SELECTMODE)
+	 || get_cmdline_type() == ':'))
+    {
+	len = langmap_adjust(buf, len, maxlen);
+    }
+#endif
+
+    return len;
+		    
 }
 
 /*
@@ -3076,6 +3088,7 @@ fix_input_buffer(
 {
     int		i;
     char_u	*p = buf;
+    int		mblen;
 
     /*
      * Two characters are special: NUL and K_SPECIAL.
@@ -3107,6 +3120,9 @@ fix_input_buffer(
 	else
 #endif
 	if (p[0] == NUL || (p[0] == K_SPECIAL && !script
+#ifdef FEAT_MBYTE
+                    && (i >= 1) /*take only non-last K_SPECIAL*/
+#endif
 #ifdef FEAT_AUTOCMD
 		    /* timeout may generate K_CURSORHOLD */
 		    && (i < 2 || p[1] != KS_EXTRA || p[2] != (int)KE_CURSORHOLD)

@@ -8268,7 +8268,6 @@ ins_reg(void)
      */
     ++no_mapping;
     regname = plain_vgetc();
-    LANGMAP_ADJUST(regname, TRUE);
     if (regname == Ctrl_R || regname == Ctrl_O || regname == Ctrl_P)
     {
 	/* Get a third key for literal register insertion */
@@ -8277,7 +8276,6 @@ ins_reg(void)
 	add_to_showcmd_c(literally);
 #endif
 	regname = plain_vgetc();
-	LANGMAP_ADJUST(regname, TRUE);
     }
     --no_mapping;
 

@@ -1697,7 +1697,7 @@ static struct vimoption options[] =
 			    {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
     {"langnoremap",  "lnr",   P_BOOL|P_VI_DEF,
 #ifdef FEAT_LANGMAP
-			    (char_u *)&p_lnr, PV_NONE,
+			    (char_u *)NULL, PV_NONE, /*not used any more, deprecated*/
 #else
 			    (char_u *)NULL, PV_NONE,
 #endif
@@ -3135,6 +3135,7 @@ static int wc_use_keyname(char_u *varp, long *wcp);
 #ifdef FEAT_LANGMAP
 static void langmap_init(void);
 static void langmap_set(void);
+int langmap_adjust(char_u*,int,int);
 #endif
 static void paste_option_changed(void);
 static void compatible_set(void);
@@ -11494,6 +11495,81 @@ langmap_adjust_mb(int c)
     }
     return c;  /* no entry found, return "c" unmodified */
 }
+
+
+
+/*
+ * Apply 'langmap' to (multi-byte) characters in "buf".
+ */
+    int
+langmap_adjust(buf, len, maxlen)
+    char_u	*buf;
+    int		len;
+    int		maxlen;
+{
+    char_u	*p = buf;
+    int i;
+    for (i = len; --i >= 0;)
+    {
+	int c, co, nco = 1, nc = 1;
+	if (*p == K_SPECIAL)
+	{
+	    i -= 3;
+	    p += 3;
+	}
+#ifdef FEAT_MBYTE
+	if (has_mbyte)
+	{
+	    c = co = (*mb_ptr2char)(p);
+	    nco = (*mb_ptr2len)(p);
+	    if (c >= 0)
+	    {
+		if (c < 256)
+		    c = langmap_mapchar[c];
+		else
+		{
+		    c = langmap_adjust_mb(c);
+		    nc = (*mb_char2len)(c);
+		}
+	    }
+	}
+	else
+#endif
+	{
+	    c = co = *p;
+	    c = langmap_mapchar[c];
+	}
+
+	if (c != co)
+	{
+	    int tlen = len + nc - nco;
+	    if (nc > nco)
+	    {
+		if (tlen > maxlen)
+		    break;
+		len = tlen;
+		mch_memmove(p + nc, p + nco, (size_t)i+1);
+	    }
+#ifdef FEAT_MBYTE
+	    if (has_mbyte)
+		(*mb_char2bytes)(c,p);
+	    else
+#endif
+		*p = (char_u)c;
+
+	    if (nc < nco)
+	    {
+		len = tlen;
+		mch_memmove(p + nc, p + nco, (size_t)i+1);
+	    }
+
+	    p += nc;
+	}
+    }
+    return len;
+}
+
+
 # endif
 
     static void

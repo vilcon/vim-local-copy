@@ -625,7 +625,6 @@ normal_cmd(
      * Get the command character from the user.
      */
     c = safe_vgetc();
-    LANGMAP_ADJUST(c, get_real_state() != SELECTMODE);
 
     /*
      * If a mapping was started in Visual or Select mode, remember the length
@@ -702,7 +701,6 @@ getcount:
 	    }
 	    ++no_zero_mapping;		/* don't map zero here */
 	    c = plain_vgetc();
-	    LANGMAP_ADJUST(c, TRUE);
 	    --no_zero_mapping;
 	    if (ctrl_w)
 	    {
@@ -725,7 +723,6 @@ getcount:
 	    ++no_mapping;
 	    ++allow_keys;		/* no mapping for nchar, but keys */
 	    c = plain_vgetc();		/* get next character */
-	    LANGMAP_ADJUST(c, TRUE);
 	    --no_mapping;
 	    --allow_keys;
 #ifdef FEAT_CMDL_INFO
@@ -908,7 +905,6 @@ getcount:
 	     * "gr", "g'" and "g`".
 	     */
 	    ca.nchar = plain_vgetc();
-	    LANGMAP_ADJUST(ca.nchar, TRUE);
 #ifdef FEAT_CMDL_INFO
 	    need_flushbuf |= add_to_showcmd(ca.nchar);
 #endif
@@ -1009,8 +1005,6 @@ getcount:
 		}
 #endif
 
-		/* adjust chars > 127, except after "tTfFr" commands */
-		LANGMAP_ADJUST(*cp, !lang);
 #ifdef FEAT_RIGHTLEFT
 		/* adjust Hebrew mapped char */
 		if (p_hkmap && lang && KeyTyped)
@@ -4707,7 +4701,6 @@ nv_zet(cmdarg_T *cap)
 	    ++no_mapping;
 	    ++allow_keys;   /* no mapping for nchar, but allow key codes */
 	    nchar = plain_vgetc();
-	    LANGMAP_ADJUST(nchar, TRUE);
 	    --no_mapping;
 	    --allow_keys;
 #ifdef FEAT_CMDL_INFO
@@ -5078,7 +5071,6 @@ dozet:
 		++no_mapping;
 		++allow_keys;   /* no mapping for nchar, but allow key codes */
 		nchar = plain_vgetc();
-		LANGMAP_ADJUST(nchar, TRUE);
 		--no_mapping;
 		--allow_keys;
 #ifdef FEAT_CMDL_INFO
