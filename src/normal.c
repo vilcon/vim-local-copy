@@ -879,6 +879,7 @@ getcount:
 	}
 	lang = (repl || (nv_cmds[idx].cmd_flags & NV_LANG));
 
+getchar:
 	/*
 	 * Get a second or third character.
 	 */
@@ -1026,6 +1027,18 @@ getcount:
 	    }
 	    ++no_mapping;
 	}
+#ifdef FEAT_TEXTOBJ
+	/*
+	 * The im/am text object needs one more character to use as left/right
+	 * bounds.
+	 */
+	if ((ca.cmdchar == 'a' || ca.cmdchar == 'i') && ca.nchar == 'm'
+		&& ca.extra_char == NUL)
+	{
+	    cp = &ca.extra_char;
+	    goto getchar;
+	}
+#endif
 	--no_mapping;
 	--allow_keys;
     }
@@ -1399,6 +1412,16 @@ do_pending_operator(cmdarg_T *cap, int old_col, int gui_yank)
 	    prep_redo(oap->regname, cap->count0,
 		    get_op_char(oap->op_type), get_extra_op_char(oap->op_type),
 		    oap->motion_force, cap->cmdchar, cap->nchar);
+#ifdef FEAT_TEXTOBJ
+	    /*
+	     * If using the am/im text object, there is one additional
+	     * character used as left/right bounds which needs to be added to
+	     * the redo buffer.
+	     */
+	    if ((cap->cmdchar == 'a' || cap->cmdchar == 'i')
+		&& cap->nchar == 'm' && cap->extra_char != NUL)
+		AppendCharToRedobuff(cap->extra_char);
+#endif
 	    if (cap->cmdchar == '/' || cap->cmdchar == '?') /* was a search */
 	    {
 		/*
@@ -8027,6 +8050,10 @@ nv_object(
 	case '`': /* "a`" = a backtick quoted string */
 		flag = current_quote(cap->oap, cap->count1, include,
 								  cap->nchar);
+		break;
+	case 'm': /* "am{char}" = a matched pair of characters */
+		flag = current_match(cap->oap, cap->count1, include,
+								  cap->extra_char);
 		break;
 #if 0	/* TODO */
 	case 'S': /* "aS" = a section */
