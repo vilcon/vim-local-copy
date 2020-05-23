@@ -316,6 +316,19 @@ update_screen(int type_arg)
 	    cursor_off();
 	    win_redr_status(wp, TRUE); // any popup menu will be redrawn below
 	}
+
+# ifdef FEAT_CMDL_INFO
+	if (wp->w_redr_ruler)
+	{
+#  if defined(MSWIN) && !defined(DYNAMIC_IME) && !defined(__GNUC__)
+	    if (!is_ime_open())
+#  endif
+	    {
+		cursor_off();
+		win_redr_ruler(wp, TRUE, FALSE);
+	    }
+	}
+# endif
     }
 #if defined(FEAT_SEARCH_EXTRA)
     end_search_hl();
@@ -622,6 +635,8 @@ win_redr_ruler(win_T *wp, int always, int ignore_pum)
     // If 'ruler' off or redrawing disabled, don't do anything
     if (!p_ru)
 	return;
+
+    wp->w_redr_ruler = FALSE;
 
     /*
      * Check if cursor.lnum is valid, since win_redr_ruler() may be called
@@ -2945,7 +2960,10 @@ redraw_after_callback(int call_update_screen)
 
 	    // Redraw in the same position, so that the user can continue
 	    // editing the command.
-	    redrawcmdline_ex(FALSE);
+#if defined(MSWIN) && !defined(DYNAMIC_IME) && !defined(__GNUC__)
+	    if (!is_ime_open())
+#endif
+		redrawcmdline_ex(FALSE);
 	}
     }
     else if (State & (NORMAL | INSERT | TERMINAL))
@@ -3078,6 +3096,29 @@ redraw_buf_and_status_later(buf_T *buf, int type)
 	    wp->w_redr_status = TRUE;
 	}
     }
+}
+#endif
+
+#ifdef FEAT_CMDL_INFO
+/*
+ * mark all rulers for redraw
+ */
+    void
+ruler_redraw_all(void)
+{
+    win_T	*wp;
+
+    FOR_ALL_WINDOWS(wp)
+	wp->w_redr_ruler = TRUE;
+}
+
+/*
+ * mark all rulers of the current window for redraw
+ */
+    void
+ruler_redraw_curwin(void)
+{
+    curwin->w_redr_ruler = TRUE;
 }
 #endif
 

@@ -81,4 +81,5 @@ int get_conpty_type(void);
 int is_conpty_stable(void);
 int get_conpty_fix_type(void);
 void resize_console_buf(void);
+int is_ime_open(void);
 /* vim: set ft=c : */
