@@ -6823,6 +6823,28 @@ compatible_set(void)
 
 #if defined(FEAT_LINEBREAK) || defined(PROTO)
 
+    int
+has_breakat_chars(int c)
+{
+    int		h, m, l;
+
+    if (breakat_chars == NULL)
+	return FALSE;
+    l = 0;
+    h = breakat_chars_len;
+    while (l < h)
+    {
+	m = (l + h) / 2;
+	if (breakat_chars[m] == c)
+	    return TRUE;
+	if (breakat_chars[m] < c)
+	    h = m;
+	else
+	    l = m + 1;
+    }
+    return FALSE;
+}
+
 /*
  * fill_breakat_flags() -- called when 'breakat' changes value.
  */
@@ -6831,13 +6853,38 @@ fill_breakat_flags(void)
 {
     char_u	*p;
     int		i;
+    garray_T	ga;
 
     for (i = 0; i < 256; i++)
 	breakat_flags[i] = FALSE;
+    if (breakat_chars != NULL)
+    {
+	vim_free(breakat_chars);
+	breakat_chars = NULL;
+	breakat_chars_len = 0;
+    }
 
+    ga_init2(&ga, sizeof(int), 100);
     if (p_breakat != NULL)
+    {
+	int n = 0;
 	for (p = p_breakat; *p; p++)
-	    breakat_flags[*p] = TRUE;
+	{
+	    int	len = (*mb_ptr2len)(p);
+	    if (len > 1)
+	    {
+		if (ga_grow(&ga, ga.ga_len + 1) == OK)
+		{
+		    ((int *)ga.ga_data)[n++] = (*mb_ptr2char)(p);
+		    ga.ga_len += len;
+		}
+	    } else
+		breakat_flags[*p] = TRUE;
+	}
+	qsort(ga.ga_data, ga.ga_len, sizeof(int), NULL);
+	breakat_chars = ga.ga_data;
+	breakat_chars_len = ga.ga_len;
+    }
 }
 #endif
 
