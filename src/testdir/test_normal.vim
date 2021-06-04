@@ -3171,6 +3171,46 @@ func Test_normal_yank_with_excmd()
   close!
 endfunc
 
+" Test for '[(', '[{', '])', ']}', 'vv[(' and 'vv]{'
+func Test_various_motions()
+  let text = ['{foo(x, y, bar(), baz());}']
+  new
+
+  call setline(1, text)
+  exe "norm! gg0/, bar\<cr>d[("
+  call assert_equal('{foo, bar(), baz());}', getline('.'))
+
+  call setline(1, text)
+  exe "norm! gg0/, bar\<cr>d[{"
+  call assert_equal(', bar(), baz());}', getline('.'))
+
+  call setline(1, text)
+  exe "norm! gg0/, bar\<cr>d])"
+  call assert_equal('{foo(x, y);}', getline('.'))
+
+  call setline(1, text)
+  exe "norm! gg0/, bar\<cr>d]}"
+  call assert_equal('{foo(x, y}', getline('.'))
+
+  call setline(1, text)
+  exe "norm! gg0/bar\<cr>d[("
+  call assert_equal('{foobar(), baz());}', getline('.'))
+
+  call setline(1, text)
+  exe "norm! gg0/bar\<cr>d[{"
+  call assert_equal('bar(), baz());}', getline('.'))
+
+  call setline(1, text)
+  exe "norm! gg0/bar\<cr>dzz[("
+  call assert_equal('{foo(bar(), baz());}', getline('.'))
+
+  call setline(1, text)
+  exe "norm! gg0/bar\<cr>dzz[{"
+  call assert_equal('{bar(), baz());}', getline('.'))
+
+  bw!
+endfunc
+
 " Test for supplying a count to a normal-mode command across a cursorhold call
 func Test_normal_cursorhold_with_count()
   func s:cHold()
