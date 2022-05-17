@@ -2079,7 +2079,8 @@ collection:
 
 nfa_do_multibyte:
 		// plen is length of current char with composing chars
-		if (enc_utf8 && ((*mb_char2len)(c)
+		if (enc_utf8 && !rex.reg_idiac
+			&& ((*mb_char2len)(c)
 			    != (plen = utfc_ptr2len(old_regparse))
 						       || utf_iscomposing(c)))
 		{
@@ -2104,6 +2105,15 @@ nfa_do_multibyte:
 		    }
 		    EMIT(NFA_COMPOSING);
 		    regparse = old_regparse + plen;
+		}
+		else if (enc_utf8 && rex.reg_idiac)
+		{
+		    // Use Collation Equivalence Class for the character entered
+		    EMIT(NFA_START_COLL);
+		    result = nfa_emit_equi_class(c);
+		    if (result == FAIL)
+			EMSG_RET_FAIL(_(e_error_building_nfa_with_equivalence_class));
+		    EMIT(NFA_END_COLL);
 		}
 		else
 		{
@@ -7576,6 +7586,7 @@ nfa_regexec_nl(
     rex.reg_win = NULL;
     rex.reg_ic = rmp->rm_ic;
     rex.reg_icombine = FALSE;
+    rex.reg_idiac = FALSE;
     rex.reg_maxcol = 0;
     return nfa_regexec_both(line, col, NULL, NULL);
 }
