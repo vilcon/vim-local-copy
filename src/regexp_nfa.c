@@ -1603,6 +1603,11 @@ nfa_regatom(void)
 		    EMIT(NFA_CURSOR);
 		    break;
 
+		case 'G':
+		    // misplaced \%G
+		    semsg(_(e_atom_diacritics_must_be_at_start_of_pattern));
+		    return FAIL;
+
 		case 'V':
 		    EMIT(NFA_VISUAL);
 		    break;

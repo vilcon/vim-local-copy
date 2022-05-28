@@ -1513,6 +1513,10 @@ regatom(int *flagp)
 		    }
 		    ret = regnode(CURSOR);
 		    break;
+		case 'G':
+		    // misplaced \%G
+		    semsg(_(e_atom_diacritics_must_be_at_start_of_pattern));
+		    return FAIL;
 
 		case 'V':
 		    ret = regnode(RE_VISUAL);

@@ -1308,7 +1308,7 @@ characters may be different and the number of composing characters may differ.
 Only relevant when 'encoding' is "utf-8".
 Exception: If the pattern starts with one or more composing characters, these
 must match.
-							*/\%G*
+							*/\%G* *E1284*
 When "\%G" appears at the beginning of the pattern (but must be after
 |two-engines|), all diacretic characters are ignored.  Thus searching for
 "\%Gbaum" will match "baum", "bäume" and "bäume" (the difference between the

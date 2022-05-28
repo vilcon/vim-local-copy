@@ -3284,3 +3284,5 @@ EXTERN char e_bitshift_ops_must_be_number[]
 EXTERN char e_bitshift_ops_must_be_postive[]
 	INIT(= N_("E1283: Bitshift amount must be a positive number"));
 #endif
+EXTERN char e_atom_diacritics_must_be_at_start_of_pattern[]
+	INIT(= N_("E1284: Atom '\\%%G' must be at the start of the pattern"));
