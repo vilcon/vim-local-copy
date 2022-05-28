@@ -2611,7 +2611,7 @@ vim_regcomp(char_u *expr_arg, int re_flags)
 #endif
     // reg_iswordc() uses rex.reg_buf
     rex.reg_buf = curbuf;
-    if (strstr((char *)expr, "\\%G") != NULL)
+    if (STRNCMP(expr, "\\%G", 3 ) == 0)
     {
 	rex.reg_idiac = TRUE;
 	expr += 3;
