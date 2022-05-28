@@ -1513,6 +1513,10 @@ regatom(int *flagp)
 		    }
 		    ret = regnode(CURSOR);
 		    break;
+		case 'G':
+		    // misplaced \%G
+		    semsg(_(e_atom_diacritics_must_be_at_start_of_pattern));
+		    return FAIL;
 
 		case 'V':
 		    ret = regnode(RE_VISUAL);
@@ -2006,8 +2010,33 @@ collection:
 	    if (use_multibytecode(c))
 	    {
 do_multibyte:
-		ret = regnode(MULTIBYTECODE);
-		regmbc(c);
+		if (rex.reg_idiac)
+		{
+		    int cc;
+		    len = 1;
+
+		    len = (*mb_ptr2len)(regparse);
+		    cc = mb_ptr2char(regparse);
+		    regparse += len;
+
+		    ret = regnode(ANYOF);
+		    reg_equi_class(cc);
+		    regc(NUL);
+		}
+		else
+		{
+		    ret = regnode(MULTIBYTECODE);
+		    regmbc(c);
+		}
+		*flagp |= HASWIDTH | SIMPLE;
+		break;
+	    }
+
+	    if (rex.reg_idiac)
+	    {
+		ret = regnode(ANYOF);
+		reg_equi_class(c);
+		regc(NUL);
 		*flagp |= HASWIDTH | SIMPLE;
 		break;
 	    }

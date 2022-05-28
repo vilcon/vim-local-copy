@@ -1091,6 +1091,10 @@ typedef struct {
     // flag in the regexp.  Defaults to false, always.
     int			reg_icombine;
 
+    // Similar to "reg_iccombine", but for the complete pattern.  Set with \%G
+    // flag at the beginning of the pattern.  Defaults to false.
+    int			reg_idiac;
+
     // Copy of "rmm_maxcol": maximum column to search for a match.  Zero when
     // there is no maximum.
     colnr_T		reg_maxcol;
@@ -2528,6 +2532,7 @@ init_regexec_multi(
     rex.reg_line_lbr = FALSE;
     rex.reg_ic = rmp->rmm_ic;
     rex.reg_icombine = FALSE;
+    rex.reg_idiac = FALSE;
     rex.reg_maxcol = rmp->rmm_maxcol;
 }
 
@@ -2606,6 +2611,11 @@ vim_regcomp(char_u *expr_arg, int re_flags)
 #endif
     // reg_iswordc() uses rex.reg_buf
     rex.reg_buf = curbuf;
+    if (STRNCMP(expr, "\\%G", 3 ) == 0)
+    {
+	rex.reg_idiac = TRUE;
+	expr += 3;
+    }
 
     /*
      * First try the NFA engine, unless backtracking was requested.
