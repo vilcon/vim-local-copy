@@ -282,4 +282,17 @@ func Test_conceal_eol()
   set nolist
 endfunc
 
+func Test_conceal_wrap()
+  new
+  setlocal concealcursor=n conceallevel=3
+  call setline(1, ['', repeat('X', &columns-3) .. 'YYYY'])
+  syntax match MyConceal /X\+/ conceal cchar= 
+  set conceallevel=3 wrap signcolumn=no nonumber
+  call cursor(1, 1)
+  redraw!
+  call assert_equal('YYYY      ', join(map(range(1, 10), {_, c -> nr2char(screenchar(2, c))}), ''))
+  syntax clear
+  quit!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
