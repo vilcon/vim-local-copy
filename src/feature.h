@@ -262,8 +262,7 @@
  */
 #if defined(FEAT_HUGE) \
 	&& defined(FEAT_EVAL) \
-	&& ((defined(HAVE_GETTIMEOFDAY) && defined(HAVE_SYS_TIME_H)) \
-		|| defined(MSWIN))
+	&& (defined(HAVE_SYS_TIME_H) || defined(MSWIN))
 # define FEAT_PROFILE
 #endif
 
@@ -272,8 +271,7 @@
  */
 #if defined(FEAT_NORMAL) \
 	&& defined(FEAT_EVAL) \
-	&& ((defined(HAVE_GETTIMEOFDAY) && defined(HAVE_SYS_TIME_H)) \
-		|| defined(MSWIN))
+	&& (defined(HAVE_SYS_TIME_H) || defined(MSWIN))
 # define FEAT_RELTIME
 #endif
 
@@ -633,8 +631,7 @@
  *			timestamps.
  */
 #if defined(FEAT_NORMAL) \
-	&& ((defined(HAVE_GETTIMEOFDAY) && defined(HAVE_SYS_TIME_H)) \
-		|| defined(MSWIN))
+	&& (defined(HAVE_SYS_TIME_H) || defined(MSWIN))
 # define STARTUPTIME 1
 #endif
 
