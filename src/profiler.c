@@ -355,7 +355,7 @@ profile_reset(void)
 	    profile_zero(&fp->uf_tm_self);
 	    profile_zero(&fp->uf_tm_children);
 
-	    for (i = 0; i < fp->uf_lines.ga_len; i++)
+	    FOR_ALL_GA_ITEMS(&fp->uf_lines, i)
 	    {
 		fp->uf_tml_count[i] = 0;
 		profile_zero(&fp->uf_tml_total[i]);
@@ -853,7 +853,7 @@ func_dump_profile(FILE *fd)
 		fprintf(fd, "\n");
 		fprintf(fd, "%s\n", PROF_TOTALS_HEADER);
 
-		for (i = 0; i < fp->uf_lines.ga_len; ++i)
+		FOR_ALL_GA_ITEMS(&fp->uf_lines, i)
 		{
 		    if (FUNCLINE(fp, i) == NULL)
 			continue;
