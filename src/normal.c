@@ -5758,7 +5758,10 @@ nv_g_home_m_cmd(cmdarg_T *cap)
 	while (VIM_ISWHITE(i) && oneright() == OK);
 	curwin->w_valid &= ~VALID_WCOL;
     }
-    curwin->w_set_curswant = TRUE;
+    if (curwin->w_cline_folded)    
+	update_curswant_force();
+    else
+	curwin->w_set_curswant = TRUE;
 }
 
 /*
