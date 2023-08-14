@@ -31,7 +31,7 @@ endif
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   let b:browsefilter = "GDB Init Files (.gdbinit gdbinit .gdbearlyinit gdbearlyinit)\t.gdbinit;gdbinit;.gdbearlyinit;gdbearlyinit\n" ..
 	\	       "GDB Command Files (*.gdb)\t*.gdb\n" ..
-	\	       "All Files (*.*)\t*.*\n"
+	\	       "All Files\t*\n"
   let b:undo_ftplugin ..= " | unlet! b:browsefilter"
 endif
 
