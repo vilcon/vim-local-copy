@@ -1571,6 +1571,11 @@ do_put(
     (void)may_get_selection(regname);
 #endif
 
+#ifndef FEAT_TINY
+    // save last putted register name
+    set_lastreg_var(regname);
+#endif
+
     if (flags & PUT_FIXINDENT)
 	orig_indent = get_indent();
 
