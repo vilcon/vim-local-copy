@@ -1021,6 +1021,7 @@ Variable		Highlight ~
 *c_no_cformat*		don't highlight %-formats in strings
 *c_no_c99*		don't highlight C99 standard items
 *c_no_c11*		don't highlight C11 standard items
+*c_no_c23*		don't highlight C23 standard items
 *c_no_bsd*		don't highlight BSD specific types
 
 When 'foldmethod' is set to "syntax" then /* */ comments and { } blocks will
