@@ -1349,7 +1349,11 @@ fail:
  * External interface
  */
     static void
-DoPyCommand(const char *cmd, rangeinitializer init_range, runner run, void *arg)
+DoPyCommand(const char *cmd,
+	    dict_T* locals,
+	    rangeinitializer init_range,
+	    runner run,
+	    void *arg)
 {
 #if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
     char		*saved_locale;
@@ -1390,7 +1394,7 @@ DoPyCommand(const char *cmd, rangeinitializer init_range, runner run, void *arg)
     cmdbytes = PyUnicode_AsEncodedString(cmdstr, "utf-8", ERRORS_ENCODE_ARG);
     Py_XDECREF(cmdstr);
 
-    run(PyBytes_AsString(cmdbytes), arg, &pygilstate);
+    run(PyBytes_AsString(cmdbytes), locals, arg, &pygilstate);
     Py_XDECREF(cmdbytes);
 
     PyGILState_Release(pygilstate);
@@ -1425,6 +1429,7 @@ ex_py3(exarg_T *eap)
 	    p_pyx = 3;
 
 	DoPyCommand(script == NULL ? (char *) eap->arg : (char *) script,
+		    NULL,
 		(rangeinitializer) init_range_cmd,
 		(runner) run_cmd,
 		(void *) eap);
@@ -1491,6 +1496,7 @@ ex_py3file(exarg_T *eap)
 
     // Execute the file
     DoPyCommand(buffer,
+		NULL,
 	    (rangeinitializer) init_range_cmd,
 	    (runner) run_cmd,
 	    (void *) eap);
@@ -1503,6 +1509,7 @@ ex_py3do(exarg_T *eap)
 	p_pyx = 3;
 
     DoPyCommand((char *)eap->arg,
+		NULL,
 	    (rangeinitializer)init_range_cmd,
 	    (runner)run_do,
 	    (void *)eap);
@@ -2050,9 +2057,10 @@ LineToString(const char *str)
 }
 
     void
-do_py3eval(char_u *str, typval_T *rettv)
+do_py3eval(char_u *str, dict_T * locals, typval_T *rettv)
 {
     DoPyCommand((char *) str,
+		locals,
 	    (rangeinitializer) init_range_eval,
 	    (runner) run_eval,
 	    (void *) rettv);

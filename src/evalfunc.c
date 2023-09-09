@@ -2392,7 +2392,7 @@ static funcentry_T global_functions[] =
 			ret_dict_number,    f_pum_getpos},
     {"pumvisible",	0, 0, 0,	    NULL,
 			ret_number_bool,    f_pumvisible},
-    {"py3eval",		1, 1, FEARG_1,	    arg1_string,
+    {"py3eval",		1, 2, FEARG_1,	    arg2_string_dict,
 			ret_any,
 #ifdef FEAT_PYTHON3
 	    f_py3eval
@@ -2408,7 +2408,7 @@ static funcentry_T global_functions[] =
 	    NULL
 #endif
 			},
-    {"pyxeval",		1, 1, FEARG_1,	    arg1_string,
+    {"pyxeval",		1, 2, FEARG_1,	    arg2_string_dict,
 			ret_any,
 #if defined(FEAT_PYTHON) || defined(FEAT_PYTHON3)
 	    f_pyxeval
@@ -8192,18 +8192,35 @@ f_py3eval(typval_T *argvars, typval_T *rettv)
 {
     char_u	*str;
     char_u	buf[NUMBUFLEN];
+    dict_T	*locals;
 
     if (check_restricted() || check_secure())
 	return;
 
-    if (in_vim9script() && check_for_string_arg(argvars, 0) == FAIL)
+    if (in_vim9script()
+	    && (check_for_string_arg(argvars, 0) == FAIL
+		|| check_for_opt_dict_arg(argvars, 1) == FAIL))
 	return;
 
     if (p_pyx == 0)
 	p_pyx = 3;
 
+    if (argvars[1].v_type == VAR_DICT)
+    {
+	locals = argvars[1].vval.v_dict;
+    }
+    else if (argvars[1].v_type != VAR_UNKNOWN)
+    {
+	emsg(_(e_dictionary_required));
+	return;
+    }
+    else
+    {
+	locals = NULL;
+    }
+
     str = tv_get_string_buf(&argvars[0], buf);
-    do_py3eval(str, rettv);
+    do_py3eval(str, locals, rettv);
 }
 #endif
 
@@ -8241,13 +8258,23 @@ f_pyxeval(typval_T *argvars, typval_T *rettv)
     if (check_restricted() || check_secure())
 	return;
 
-    if (in_vim9script() && check_for_string_arg(argvars, 0) == FAIL)
+    if (in_vim9script()
+	    && (check_for_string_arg(argvars, 0) == FAIL
+		|| check_for_opt_dict_arg(argvars, 1) == FAIL))
 	return;
 
 # if defined(FEAT_PYTHON) && defined(FEAT_PYTHON3)
     init_pyxversion();
     if (p_pyx == 2)
+    {
+	if (argvars[1].v_type != VAR_UNKNOWN)
+	{
+	    // TODO: Better error message?
+	    emsg(_(e_sorry_command_is_not_available_in_this_version));
+	    return;
+	}
 	f_pyeval(argvars, rettv);
+    }
     else
 	f_py3eval(argvars, rettv);
 # elif defined(FEAT_PYTHON)
