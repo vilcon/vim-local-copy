@@ -3,7 +3,7 @@ vim9script
 # Vim functions for file type detection
 #
 # Maintainer:		The Vim Project <https://github.com/vim/vim>
-# Last Change:		2024 May 23
+# Last Change:		2024 Jul 07
 # Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 # These functions are moved here from runtime/filetype.vim to make startup
@@ -469,9 +469,8 @@ export def FTm()
 
   var saw_comment = 0  # Whether we've seen a multiline comment leader.
 
-  # shebang lines have lower priority than content detection and complicate
-  # Miranda and Octave tests, so consider line 2 the first relevant line of
-  # the file
+  # skip shebang lines as these have lower priority than content detection and
+  # complicate Miranda and Octave tests
   var line1 = getline(1) =~ '^#!' ? 2 : 1
 
   for lnum in range(line1, min([100, line("$")]))

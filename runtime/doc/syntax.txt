@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 9.1.  Last change: 2024 Jul 03
+*syntax.txt*	For Vim version 9.1.  Last change: 2024 Jul 07
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -2303,6 +2303,11 @@ Empty *.m files will automatically be presumed to be Matlab files unless you
 have the following in your .vimrc: >
 
 	let filetype_m = "mma"
+
+
+MIRANDA					*miranda.vim* *ft-miranda-syntax*
+
+    TODO
 
 
 MODULA2					*modula2.vim* *ft-modula2-syntax*

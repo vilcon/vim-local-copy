@@ -1,20 +1,16 @@
 " Vim filetype plugin file
 " Language:	Miranda
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2024 Feb 01
+" Last Change:	2024 Jul 07
 
 function miranda#GetFileTypeInfo() abort
   if exists("b:miranda")
     return b:miranda
   endif
 
-  if exists("g:miranda_default_literate")
-    let s:literate = g:miranda_default_literate
-  else
-    let s:literate = v:false
-  endif
+  let literate = get(g:, "miranda_default_literate", v:false)
 
-  return #{ literate: s:literate }
+  return #{ literate: literate }
 endfunction
 
 function miranda#SetFileTypeInfo(info) abort
@@ -27,4 +23,3 @@ function miranda#SetFileTypeInfo(info) abort
 endfunction
 
 " vim: nowrap sw=2 sts=2 ts=8 noet fdm=marker:
-
