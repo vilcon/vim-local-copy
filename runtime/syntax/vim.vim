@@ -273,10 +273,10 @@ syn keyword vimAugroupKey	contained aug[roup]  skipwhite nextgroup=vimAugroupBan
 
 " Operators: {{{2
 " =========
-syn cluster	vimOperGroup	contains=vimEnvvar,vimFunc,vimFuncVar,vimOper,vimOperParen,vimNumber,vimString,vimRegister,@vimContinue,vim9Comment,vimVar
-syn match	vimOper	"||\|&&\|[-+*/%.!]"				skipwhite nextgroup=vimString,vimSpecFile
-syn match	vimOper	"\%#=1\(==\|!=\|>=\|<=\|=\~\|!\~\|>\|<\|=\|!\~#\)[?#]\{0,2}"	skipwhite nextgroup=vimString,vimSpecFile
-syn match	vimOper	"\(\<is\|\<isnot\)[?#]\{0,2}\>"			skipwhite nextgroup=vimString,vimSpecFile
+syn cluster	vimOperGroup	contains=vimEnvvar,vimFunc,vimFuncVar,vimOper,vimOperParen,vimNumber,vimString,vimContinueString,vimRegister,@vimContinue,vim9Comment,vimVar
+syn match	vimOper	"||\|&&\|[-+*/%.!]"				skipwhite nextgroup=vimString,vimContinueString,vimSpecFile
+syn match	vimOper	"\%#=1\(==\|!=\|>=\|<=\|=\~\|!\~\|>\|<\|=\|!\~#\)[?#]\{0,2}"	skipwhite nextgroup=vimString,vimContinueString,vimSpecFile
+syn match	vimOper	"\(\<is\|\<isnot\)[?#]\{0,2}\>"			skipwhite nextgroup=vimString,vimContinueString,vimSpecFile
 syn region	vimOperParen 	matchgroup=vimParenSep	start="(" end=")" contains=@vimOperGroup
 syn region	vimOperParen	matchgroup=vimSep		start="#\={" end="}" contains=@vimOperGroup nextgroup=vimVar,vimFuncVar
 if !exists("g:vimsyn_noerror") && !exists("g:vimsyn_noopererror")
@@ -450,7 +450,7 @@ syn match	vimEnvvar	"\${\I\i*}"
 " In-String Specials: {{{2
 " Try to catch strings, if nothing else matches (therefore it must precede the others!)
 "  vimEscapeBrace handles ["]  []"] (ie. "s don't terminate string inside [])
-syn region	vimEscapeBrace	oneline   contained transparent start="[^\\]\(\\\\\)*\[\zs\^\=\]\=" skip="\\\\\|\\\]" end="]"me=e-1
+" syn region	vimEscapeBrace	oneline   contained transparent start="[^\\]\(\\\\\)*\[\zs\^\=\]\=" skip="\\\\\|\\\]" end="]"me=e-1
 syn match	vimPatSepErr	contained	"\\)"
 syn match	vimPatSep	contained	"\\|"
 syn region	vimPatSepZone	oneline   contained   matchgroup=vimPatSepZ start="\\%\=\ze(" skip="\\\\" end="\\)\|[^\\]['"]"	contains=@vimStringGroup
@@ -460,8 +460,9 @@ syn cluster	vimStringGroup	contains=vimEscape,vimEscapeBrace,vimPatSep,vimNotPat
 syn region	vimString	oneline keepend	start=+[^a-zA-Z>!\\@]"+lc=1 skip=+\\\\\|\\"+ matchgroup=vimStringEnd end=+"+	contains=@vimStringGroup
 syn region	vimString	oneline keepend	start=+[^a-zA-Z>!\\@]'+lc=1 end=+'+
 "syn region	vimString	oneline	start="\s/\s*\A"lc=1 skip="\\\\\|\\+" end="/"	contains=@vimStringGroup  " see tst45.vim
-syn match	vimString	contained	+"[^"]*\\$+	skipnl nextgroup=vimStringCont
-syn match	vimStringCont	contained	+\(\\\\\|.\)\{-}[^\\]"+
+" TODO: Remove this, it requires uneccessary trailing \ and only matches one line of continuation
+" syn match	vimString	contained	+"[^"]*\\$+	skipnl nextgroup=vimStringCont
+" syn match	vimStringCont	contained	+\(\\\\\|.\)\{-}[^\\]"+
 syn match	vimEscape	contained	"\\."
 " syn match	vimEscape	contained	+\\[befnrt\"]+
 syn match	vimEscape	contained	"\\\o\{1,3}\|\\[xX]\x\{1,2}\|\\u\x\{1,4}\|\\U\x\{1,8}"
@@ -473,6 +474,13 @@ syn region	vimString	oneline start=+$"+ end=+"+ contains=@vimStringGroup,vimStri
 syn region	vimStringInterpolationExpr  oneline contained matchgroup=vimSep start=+{+ end=+}+ contains=@vimExprList
 syn match	vimStringInterpolationBrace contained "{{"
 syn match	vimStringInterpolationBrace contained "}}"
+
+syn region	vimContinueString	contained	start=+$'+ end=+'+ skip=+\\\\\|\\'\|''+	contains=@vimContinue,vimStringInterpolationBrace,vimStringInterpolationExpr	   skipwhite nextgroup=vimComment
+syn region	vimContinueString	contained	start=+$"+ skip=/\\\\\|\\"\|\s*"\\ / end=+"+	contains=@vimContinue,@vimStringGroup,vimStringInterpolationBrace,vimStringInterpolationExpr skipwhite nextgroup=vimComment
+syn region	vimContinueString	contained	start=/'/ skip=/''/ end=/'/		contains=@vimContinue				   skipwhite nextgroup=vimComment
+syn region	vimContinueString	contained	start=/"/ skip=/\\\\\|\\"\|\s*"\\ / end=/"/	contains=@vimContinue,@vimStringGroup			   skipwhite nextgroup=vimComment
+" syn region	vimContinueString	contained	start=/\%([a-zA-Z>!\\@]\)\@1<!"/ skip=/\\\\\|\\"\|\s*"\\ / end=/"/	contains=@vimContinue,@vimStringGroup
+hi def link vimContinueString vimString
 
 " Substitutions: {{{2
 " =============
@@ -871,6 +879,7 @@ syn match	vim9CommentTitle	'#\s*\%([sS]:\|\h\w*#\)\=\u\w*\(\s\+\u\w*\)*:'hs=s+1	
 syn match	vimContinue		"^\s*\zs\\"
 syn match         vimContinueComment	'^\s*\zs["#]\\ .*'
 syn cluster	vimContinue contains=vimContinue,vimContinueComment
+" TODO: ??? This is from v7.0 or earlier
 syn region	vimString	start="^\s*\\\z(['"]\)" skip='\\\\\|\\\z1' end="\z1" oneline keepend contains=@vimStringGroup,vimContinue
 syn match	vimCommentTitleLeader	'"\s\+'ms=s+1	contained
 syn match	vim9CommentTitleLeader	'#\s\+'ms=s+1	contained
