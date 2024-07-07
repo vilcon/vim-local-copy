@@ -467,6 +467,7 @@ def s:GetFilenameChecks(): dict<list<string>>
     mgl: ['file.mgl'],
     mgp: ['file.mgp'],
     mib: ['file.mib', 'file.my'],
+    miranda: ['file.lit.m'],
     mix: ['file.mix', 'file.mixal'],
     mma: ['file.nb'],
     mmp: ['file.mmp'],
@@ -997,6 +998,7 @@ def s:GetScriptChecks(): dict<list<list<string>>>
     janet:  [['#!/path/janet']],
     dart:   [['#!/path/dart']],
     vim:    [['#!/path/vim']],
+    miranda: [['#!/path/mira']],
   }
 enddef
 
@@ -1646,6 +1648,25 @@ func Test_m_file()
   call writefile(['% MATLAB line comment'], 'Xfile.m')
   split Xfile.m
   call assert_equal('matlab', &filetype)
+  bwipe!
+
+  " Miranda
+
+  call writefile(['||Miranda comment'], 'Xfile.m')
+  split Xfile.m
+  call assert_equal('miranda', &filetype)
+  bwipe!
+
+  call writefile(['> ||Miranda literate comment'], 'Xfile.m')
+  split Xfile.m
+  call assert_equal('miranda', &filetype)
+  call assert_true(b:miranda.literate)
+  bwipe!
+
+  call writefile(['#!/usr/bin/miranda -exec', '> fac 0 = 1'], 'Xfile.m')
+  split Xfile.m
+  call assert_equal('miranda', &filetype)
+  call assert_true(b:miranda.literate)
   bwipe!
 
   " Murphi
