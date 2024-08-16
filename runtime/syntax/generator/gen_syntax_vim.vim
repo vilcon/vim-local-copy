@@ -2,7 +2,7 @@
 " Language: Vim script
 " Maintainer: Hirohito Higashi (h_east)
 " URL: https://github.com/vim-jp/syntax-vim-ex
-" Last Change: 2024 Jul 18
+" Last Change: 2024 Aug 19
 " Version: 2.1.1
 
 let s:keepcpo= &cpo
@@ -305,13 +305,31 @@ function! s:get_vim_command_type(cmd_name)
 		function
 		insert
 		let
+		lua
+		luado
+		luafile
 		map
 		mapclear
 		match
+		mzscheme
+		mzfile
 		noremap
 		new
 		normal
+		perl
+		perldo
 		popup
+		python
+		pyfile
+		pydo
+		python3
+		py3
+		py3do
+		py3file
+		pythonx
+		pyx
+		pyxdo
+		pyxfile
 		set
 		setglobal
 		setlocal
@@ -320,6 +338,9 @@ function! s:get_vim_command_type(cmd_name)
 		snomagic
 		substitute
 		syntax
+		tcl
+		tcldo
+		tclfile
 		throw
 		unlet
 		unmap
